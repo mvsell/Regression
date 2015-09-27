@@ -1,0 +1,68 @@
+---
+title: "RegressionModels_Project"
+author: "MVS"
+date: "September 24, 2015"
+output: pdf_document
+---
+
+## Executive Summary
+In this issue of Motor Trend magazine we examine the relationship between a set of car variables (mtcars) and miles per gallon (mpg). In particular, we look at whether an automatic or manual transmission is better for fuel consumption in terms of mpg. We quantify and visualize the mpg differences for the mtcars dataset. We begin with an EDA of the mtcars dataset: We check the relationship between each independent variable and dependent variable, as well as among independent variables, using scatterplots and correlations. Variables that are not related to the dependent variable, or those that are redundant because they are highly correlated with other independent variables, are removed from the analysis. Finally, we look at p-values to establish statistical significance of our final model coefficients.
+
+## Exploratory Data Analysis
+The mtcars dataset comes from the 1974 Motor Trend US magazine. It comprises fuel consumption in miles per gallon (mpg) and 10 car variables pertaining to automobile design and performance for 32 models from 1973-1974.
+
+A sample of the first few lines of the dataset shows us the variables collected for each car:
+```{r}
+head(mtcars, n=4)
+```
+Fitting mutliple linear regression models:
+
+We first attempt a simple linear regression model using mpg and transmission type:
+```{r}
+summary(lm(mpg~am, data=mtcars))$coefficients
+```
+The coefficient estimate indicates the estimated change in mpg for every unit change in transmission type. Since transmission type is a binary variable (automatic = 0, manual = 1) we would interpret a 7.244 mpg increase, on average, when switching from an automatic to a manual transmission car. However, we know that other variables are involved and without properly accounting for their effect on mpg we can't explain if mpg changes are entirely controlled by transmission type. 
+
+A multivariable regression model is needed to see the effect of other variables on mpg, and on eachother:
+
+```{r}
+summary(lm(mpg~., data=mtcars))$coefficients
+```
+Using all variables as part of the model, we would interpret that a 2.52 mpg increase occurs (on average) when switching to a manual transmission car, all other variables held constant.
+
+Looking at the (sorted) correlation values between mpg and each of the other variables: 
+```{r}
+sort(abs(cor(mtcars)[,1]), decreasing=TRUE)
+```
+we note that variables having a weak relationship with mpg will not contribute to the linear model. Variables that are correlated to mpg should be included in the final multivariable regression model. However, independent variables that are multicollinear with each other should also be removed to simplify the model. We can use the correlation values and the scatterplots (appendix) to see those independent variables that 1) form a linear relationship with mpg (i.e. used in our final model) 2) have no linear relationship with mpg (i.e. not used in the final model) and 3) are multicollinear with other independent variables (i.e. not used in the model).
+
+## Results
+
+Based on the correlation values and multicollinearity found among some independent values (e.g. cyl, displ, hp, wt, and carb are strongly negatively correlated, where as drat, qsec, vs, am, and gear are strongly positively correlated, thus only one of them in each case is needed in the final model) we have the two covariate model:
+
+```{r}
+summary(lm(mpg~cyl+am, data=mtcars))$coefficients
+```
+Here we see that every cylinder increase decreases mile-to-fuel consumption rates by approximately 5 mpg and that approximately 2.56 mpg gain is achieved by driving a manual car (from that period!). The p-value belo 0.05 indicates a statistically significant (95%) number.
+
+An estimate for a new value would be given by 
+#  y_hat = beta_0 + beta1 * x1 + beta_2 * x2 + error
+
+```{r}
+beta_0 = 24.495
+beta_1 = -5.002
+beta_2 = 2.567
+x1 = 10
+x2 = 1
+```
+residual plot
+
+## Appendix:
+The scatterplots from all variables is useful for visually revealing those variables that are multicollinear with each other.
+
+```{r, fig.width=9, fig.height=9}
+require(GGally)
+g = ggpairs(mtcars, lower = list(continuous="smooth"), params=c(method = "loess"))
+g
+
+```
